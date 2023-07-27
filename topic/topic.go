@@ -6,7 +6,7 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
-type TopicDelegate interface {
+type Subscriber interface {
 	GetTopic() string
 	MessagePrintHandler() mqtt.MessageHandler
 	MessageDeliveryHandler(out chan<- *TopicValue) mqtt.MessageHandler
@@ -53,4 +53,8 @@ func (topic *Topic) MessageDeliveryHandler(out chan<- *TopicValue) mqtt.MessageH
 			Value: msg.Payload(),
 		}
 	}
+}
+
+func (topic *Topic) Publish(c mqtt.Client, payload []byte) mqtt.Token {
+	return c.Publish(topic.Topic, byte(topic.Qos), true, payload)
 }
