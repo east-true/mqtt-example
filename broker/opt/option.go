@@ -8,14 +8,6 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
-type MqType uint8
-
-const (
-	MQ_TYPE_NONE MqType = iota
-	MQ_TYPE_TCP
-	MQ_TYPE_WS
-)
-
 type Option struct {
 	ClientName string
 	Name       string
@@ -25,25 +17,17 @@ type Option struct {
 	CaCert     string
 }
 
-func (opt *Option) TypeOf(addr string) MqType {
+func (opt *Option) Get(addr string) *mqtt.ClientOptions {
+	var Opt *mqtt.ClientOptions
+	if strings.TrimSpace(opt.ClientName) == "" {
+		opt.ClientName = genID()
+	}
+
 	var addrs []string = strings.Split(addr, ":")
 	switch strings.ToLower(addrs[0]) {
 	case "tcp":
-		return MQ_TYPE_TCP
-	case "ws":
-		return MQ_TYPE_WS
-	default:
-		return MQ_TYPE_NONE
-	}
-
-}
-
-func (opt *Option) get(addr string) *mqtt.ClientOptions {
-	var Opt *mqtt.ClientOptions
-	switch opt.TypeOf(addr) {
-	case MQ_TYPE_TCP:
 		Opt = opt.Credential()
-	// case MQ_TYPE_WS:
+	// case "ws":
 	// Opt = opt.WebSocket()
 	default:
 		Opt = opt.None()
@@ -60,20 +44,12 @@ func (opt *Option) get(addr string) *mqtt.ClientOptions {
 }
 
 func (opt *Option) None() *mqtt.ClientOptions {
-	if strings.TrimSpace(opt.ClientName) == "" {
-		opt.ClientName = genID()
-	}
-
 	return &mqtt.ClientOptions{
 		ClientID: opt.ClientName,
 	}
 }
 
 func (opt *Option) Credential() *mqtt.ClientOptions {
-	if strings.TrimSpace(opt.ClientName) == "" {
-		opt.ClientName = genID()
-	}
-
 	return &mqtt.ClientOptions{
 		ClientID: opt.ClientName,
 		Username: opt.Name,
@@ -82,7 +58,8 @@ func (opt *Option) Credential() *mqtt.ClientOptions {
 }
 
 /*
-	공장에서 사용되기에 websocket으로 연결될 경우가 없어 주석처리
+	TODO : WEB SOCKET
+
 	func (opt *Option) WebSocket() *mqtt.ClientOptions {
 		return &mqtt.ClientOptions{
 			ClientID:         genID(),
@@ -99,6 +76,7 @@ func (opt *Option) Credential() *mqtt.ClientOptions {
 	}
 
 
+	TODO : TLS
 // Import trusted certificates from CAfile.pem.
 // Alternatively, manually add CA certificates to default openssl CA bundle.
 func (opt *Option) tls() (*tls.Config, error) {
