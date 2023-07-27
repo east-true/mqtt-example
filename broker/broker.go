@@ -21,7 +21,6 @@ func New(address string, topics ...topic.Subscriber) *Broker {
 	}
 }
 
-// opt := broker.Option.get(broker.Addr)
 func (broker *Broker) Connect(opt *mqtt.ClientOptions) error {
 	broker.Client = mqtt.NewClient(opt)
 	token := broker.Client.Connect()
@@ -35,7 +34,7 @@ func (broker *Broker) Connect(opt *mqtt.ClientOptions) error {
 }
 
 func (broker *Broker) IsConnected() bool {
-	return broker.Client != nil
+	return broker.Client != nil && broker.Client.IsConnected()
 }
 
 func (broker *Broker) Disconnect() {
@@ -45,15 +44,15 @@ func (broker *Broker) Disconnect() {
 	}
 }
 
-func (broker *Broker) SubscribeMultiple(filter map[string]byte) mqtt.Token {
+func (broker *Broker) SubscribeMultiplePrint(filter map[string]byte) mqtt.Token {
 	for key, value := range filter {
 		mqtt.DEBUG.Printf("Subscribe Multiple(topic:%s, qos:%d)", key, value)
 	}
 
-	return broker.Client.SubscribeMultiple(filter, broker.multipleMessageHandler())
+	return broker.Client.SubscribeMultiple(filter, broker.multipleMessagePrintHandler())
 }
 
-func (broker *Broker) multipleMessageHandler() mqtt.MessageHandler {
+func (broker *Broker) multipleMessagePrintHandler() mqtt.MessageHandler {
 	return func(c mqtt.Client, msg mqtt.Message) {
 		if !c.IsConnected() {
 			panic("mqtt not connected")
@@ -64,6 +63,30 @@ func (broker *Broker) multipleMessageHandler() mqtt.MessageHandler {
 			msgTopicName := msg.Topic()
 			if isWildCard(topicName, msgTopicName) || topicName == msgTopicName {
 				topic.MessagePrintHandler()
+			}
+		}
+	}
+}
+
+func (broker *Broker) SubscribeMultipleDelivery(filter map[string]byte, out chan<- *topic.TopicValue) mqtt.Token {
+	for key, value := range filter {
+		mqtt.DEBUG.Printf("Subscribe Multiple(topic:%s, qos:%d)", key, value)
+	}
+
+	return broker.Client.SubscribeMultiple(filter, broker.multipleMessageDeliveryHandler(out))
+}
+
+func (broker *Broker) multipleMessageDeliveryHandler(out chan<- *topic.TopicValue) mqtt.MessageHandler {
+	return func(c mqtt.Client, msg mqtt.Message) {
+		if !c.IsConnected() {
+			panic("mqtt not connected")
+		}
+
+		for _, topic := range broker.topics {
+			topicName := topic.GetTopic()
+			msgTopicName := msg.Topic()
+			if isWildCard(topicName, msgTopicName) || topicName == msgTopicName {
+				topic.MessageDeliveryHandler(out)
 			}
 		}
 	}
