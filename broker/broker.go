@@ -10,11 +10,11 @@ import (
 
 type Broker struct {
 	addr   string // format : [tcp | ssl | ws]://[IP]:[PORT]
-	topics []topic.TopicDelegate
+	topics []topic.Subscriber
 	Client mqtt.Client
 }
 
-func New(address string, topics ...topic.TopicDelegate) *Broker {
+func New(address string, topics ...topic.Subscriber) *Broker {
 	return &Broker{
 		addr:   address,
 		topics: topics,
@@ -25,7 +25,9 @@ func New(address string, topics ...topic.TopicDelegate) *Broker {
 func (broker *Broker) Connect(opt *mqtt.ClientOptions) error {
 	broker.Client = mqtt.NewClient(opt)
 	token := broker.Client.Connect()
-	if token.Wait() && token.Error() != nil {
+	_ = token.Wait()
+	if token.Error() != nil {
+		mqtt.WARN.Println(token.Error())
 		broker.Client = nil
 	}
 
