@@ -1,2 +1,5 @@
 # mqttgo
-communication to mqtt
+
+
+### dependency
+github.com/eclipse/paho.mqtt.golanghttps://github.com/eclipse/paho.mqtt.golang
