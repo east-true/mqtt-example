@@ -29,7 +29,7 @@ func TestSubscribe(t *testing.T) {
 		fmt.Printf("%v %v\n", name, string(payload))
 	})
 
-	client.Publish(topic, qos, true, "Hi")
+	client.Publish(topic, qos, true, []byte("Hi"))
 	_ = token.Wait()
 	if token.Error() != nil {
 		t.Error(token.Error())
@@ -68,7 +68,7 @@ func TestSubscribeMultiple(t *testing.T) {
 	})
 
 	for topic, qos := range filter {
-		client.Publish(topic, qos, true, "Hi")
+		client.Publish(topic, qos, true, []byte("Hi"))
 		_ = token.Wait()
 		if token.Error() != nil {
 			t.Error(token.Error())
@@ -81,5 +81,31 @@ func TestSubscribeMultiple(t *testing.T) {
 		if token.Error() != nil {
 			t.Error(token.Error())
 		}
+	}
+}
+
+func TestPublish(t *testing.T) {
+	addr := "127.0.0.1:1883"
+	id := "mqtt-client"
+	client := mqtt.NewClient(mqtt.NewClientOptions().SetClientID(id).AddBroker(addr))
+
+	token := client.Connect()
+	_ = token.Wait()
+	if token.Error() != nil {
+		t.Error(token.Error())
+	} else {
+		defer client.Disconnect(10)
+	}
+
+	topic := "/test/a"
+	qos := byte(0)
+	for i := 0; i < 10; i++ {
+		client.Publish(topic, qos, true, []byte{byte(i)})
+		go func(topic string) {
+			_ = token.Wait()
+			if token.Error() != nil {
+				t.Errorf("%v %v", topic, token.Error())
+			}
+		}(topic)
 	}
 }
