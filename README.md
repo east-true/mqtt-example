@@ -25,7 +25,7 @@ func TestSubscribe(t *testing.T) {
 		fmt.Printf("%v %v\n", name, string(payload))
 	})
 
-	client.Publish(topic, qos, true, "Hi")
+	client.Publish(topic, qos, true, []byte("Hi"))
 	_ = token.Wait()
 	if token.Error() != nil {
 		t.Error(token.Error())
@@ -66,7 +66,7 @@ func TestSubscribeMultiple(t *testing.T) {
 	})
 
 	for topic, qos := range filter {
-		client.Publish(topic, qos, true, "Hi")
+		client.Publish(topic, qos, true, []byte("Hi"))
 		_ = token.Wait()
 		if token.Error() != nil {
 			t.Error(token.Error())
