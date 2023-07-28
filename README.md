@@ -1,5 +1,7 @@
 # mqtt-example
 https://github.com/eclipse/paho.mqtt.golang
+
+### Subscribe
 ```go
 func TestSubscribe(t *testing.T) {
 	addr := "127.0.0.1:1883"
@@ -36,6 +38,7 @@ func TestSubscribe(t *testing.T) {
 	}
 }
 ```
+### SubscribeMultiple
 ```go
 func TestSubscribeMultiple(t *testing.T) {
 	addr := "127.0.0.1:1883"
@@ -76,6 +79,34 @@ func TestSubscribeMultiple(t *testing.T) {
 		if token.Error() != nil {
 			t.Error(token.Error())
 		}
+	}
+}
+```
+### Publish
+```go
+func TestPublish(t *testing.T) {
+	addr := "127.0.0.1:1883"
+	id := "mqtt-client"
+	client := mqtt.NewClient(mqtt.NewClientOptions().SetClientID(id).AddBroker(addr))
+
+	token := client.Connect()
+	_ = token.Wait()
+	if token.Error() != nil {
+		t.Error(token.Error())
+	} else {
+		defer client.Disconnect(10)
+	}
+
+	topic := "/test/a"
+	qos := byte(0)
+	for i := 0; i < 10; i++ {
+		client.Publish(topic, qos, true, []byte{byte(i)})
+		go func(topic string) {
+			_ = token.Wait()
+			if token.Error() != nil {
+				t.Errorf("%v %v", topic, token.Error())
+			}
+		}(topic)
 	}
 }
 ```
