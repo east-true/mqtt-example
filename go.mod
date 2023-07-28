@@ -1,4 +1,4 @@
-module mqttgo
+module mqtt-example
 
 go 1.20
 

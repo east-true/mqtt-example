@@ -1,4 +1,4 @@
-package mqttgo
+package main
 
 import (
 	"fmt"
